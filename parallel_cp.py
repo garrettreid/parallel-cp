@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: tabstop=4:shiftwidth=4:smarttab:noexpandtab
 
 # parallel_cp.py
@@ -23,14 +23,14 @@ def main():
 
 	# Set up children, then watch their progress
 	source_size = os.path.getsize(args.source_file)
-	print "Copying %s bytes using %s children" % (source_size, args.parts)
+	print("Copying %s bytes using %s children" % (source_size, args.parts))
 	children = spawn_children(args.source_file, args.destination_file, args.parts, source_size)
 	show_progress(children, source_size)
 
 	# Merge files and finish up
-	print "Merging copied files"
+	print("Merging copied files")
 	merge_files(args.destination_file, args.parts)
-	print "All done!"
+	print("All done!")
 	sys.exit(0)
 
 # Parse all arguments and return a namespace
@@ -83,7 +83,7 @@ def merge_files(dest_file, parts):
 		# Loop through each (other) slice, and append to the first
 		for i in range(1,parts):
 			current_file = "%s.%s" % (dest_file, i)
-			with open(current_file) as in_fh:
+			with open(current_file, 'rb') as in_fh:
 				out_fh.write(in_fh.read())
 			os.remove(current_file)
 
@@ -93,7 +93,7 @@ def merge_files(dest_file, parts):
 # Copy a slice of a file, reporting process to parent when asked
 # By default, this will copy in 1MB blocks (for status reporting)
 def partial_copy(path_from, path_to, size_from, proc_num, total_procs, output, block_size=1048576):
-	with open(path_from) as in_fh, open("%s.%s" % (path_to, proc_num), 'wb') as out_fh:
+	with open(path_from, 'rb') as in_fh, open("%s.%s" % (path_to, proc_num), 'wb') as out_fh:
 		# Figure out what part to copy
 		start_pos, end_pos, read_len = get_copy_offsets(proc_num, total_procs, size_from)
 		in_fh.seek(start_pos)
@@ -109,7 +109,8 @@ def partial_copy(path_from, path_to, size_from, proc_num, total_procs, output, b
 			# Calculate remaining bytes, then copy
 			bytes_remaining = read_len - bytes_read
 			if bytes_remaining > block_size: # copy a full block
-				out_fh.write(in_fh.read(block_size))
+				tmp = in_fh.read(block_size)
+				out_fh.write(tmp)
 				bytes_read += block_size
 			else: # copy remaining data (< 1 block)
 				out_fh.write(in_fh.read(bytes_remaining))
